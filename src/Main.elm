@@ -1,7 +1,7 @@
 module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Browser
-import Html exposing (Html, button, div, form, input, text)
+import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events as Events
 
@@ -16,7 +16,7 @@ main =
 
 
 type alias Model =
-    { description : String }
+    { description : String, entries: List String }
 
 
 type Msg
@@ -26,7 +26,7 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { description = "" }
+    ( { description = "", entries = [] }
     , Cmd.none
     )
 
@@ -50,7 +50,8 @@ update msg model =
                 ( model, Cmd.none )
 
             else
-                Debug.log cleanDescription ( { model | description = "" }, Cmd.none )
+                ( { model | description = ""
+                  , entries = model.entries ++ [cleanDescription] }, Cmd.none )
 
 
 
@@ -59,13 +60,17 @@ update msg model =
 
 view : Model -> Html Msg
 view mod =
-    Html.form [ Events.onSubmit AddEntry ]
-        [ input
-            [ type_ "text"
-            , autofocus True
-            , placeholder "What needs to be done?"
-            , value mod.description
-            , Events.onInput SetDescription
-            ]
-            []
-        ]
+    div []
+      [
+        Html.form [ Events.onSubmit AddEntry ]
+          [ input
+              [ type_ "text"
+              , autofocus True
+              , placeholder "What needs to be done?"
+              , value mod.description
+              , Events.onInput SetDescription
+              ]
+              []
+          ]
+        , ul [] (List.map (\description -> li [] [ text description ]) mod.entries)
+      ]
