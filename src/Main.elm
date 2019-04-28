@@ -29,6 +29,7 @@ type Msg
     | ToggleEntry Int Bool
     | ToggleEntries Bool
     | DeleteEntry Int
+    | RemoveCompletedEntries
 
 
 init : () -> ( Model, Cmd Msg )
@@ -94,6 +95,14 @@ update msg model =
             , Cmd.none
             )
 
+        RemoveCompletedEntries ->
+            ( { model
+                | entries =
+                    List.filter (\entry -> entry.completed /= True) model.entries
+              }
+            , Cmd.none
+            )
+
 
 
 -- VIEW
@@ -122,6 +131,11 @@ view mod =
             , text "Mark all as completed"
             ]
         , ul [] (List.map (\entry -> li [] [ viewEntry entry ]) mod.entries)
+        , button
+            [ type_ "button"
+            , Events.onClick RemoveCompletedEntries
+            ]
+            [ text "Clear completed" ]
         ]
 
 
