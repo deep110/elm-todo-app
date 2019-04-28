@@ -27,6 +27,8 @@ type Msg
     = SetDescription String
     | AddEntry
     | ToggleEntry Int Bool
+    | ToggleEntries Bool
+    | DeleteEntry Int
 
 
 init : () -> ( Model, Cmd Msg )
@@ -76,6 +78,23 @@ update msg model =
             in
             ( { model | entries = List.map updateEntry model.entries }, Cmd.none )
 
+        ToggleEntries done ->
+            ( { model
+                | entries =
+                    List.map (\entry -> { entry | completed = done }) model.entries
+              }
+            , Cmd.none
+            )
+
+        DeleteEntry entryId ->
+            ( { model
+                | entries =
+                    List.filter (\entry -> entry.id /= entryId) model.entries
+              }
+            , Cmd.none
+            )
+
+
 
 -- VIEW
 
@@ -93,13 +112,22 @@ view mod =
                 ]
                 []
             ]
+        , label []
+            [ input
+                [ type_ "checkbox"
+                , checked (List.all .completed mod.entries)
+                , Events.onCheck ToggleEntries
+                ]
+                []
+            , text "Mark all as completed"
+            ]
         , ul [] (List.map (\entry -> li [] [ viewEntry entry ]) mod.entries)
         ]
 
 
 viewEntry : Entry -> Html Msg
 viewEntry entry =
-    div []
+    div [ class "hover-target" ]
         [ input
             [ type_ "checkbox"
             , checked entry.completed
@@ -109,4 +137,10 @@ viewEntry entry =
         , span
             [ classList [ ( "line-through", entry.completed ) ] ]
             [ text entry.name ]
+        , button
+            [ type_ "button"
+            , class "ml-1 visible-on-hover"
+            , Events.onClick (DeleteEntry entry.id)
+            ]
+            [ text "x" ]
         ]
