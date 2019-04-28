@@ -15,13 +15,18 @@ main =
 -- MODEL
 
 
+type alias Entry =
+    { id : Int, name : String, completed : Bool }
+
+
 type alias Model =
-    { description : String, entries: List String }
+    { description : String, entries : List Entry }
 
 
 type Msg
     = SetDescription String
     | AddEntry
+    | ToggleEntry Int Bool
 
 
 init : () -> ( Model, Cmd Msg )
@@ -50,8 +55,28 @@ update msg model =
                 ( model, Cmd.none )
 
             else
-                ( { model | description = ""
-                  , entries = model.entries ++ [cleanDescription] }, Cmd.none )
+                ( { model
+                    | description = ""
+                    , entries = model.entries ++ [ createEntry (List.length model.entries) cleanDescription ]
+                  }
+                , Cmd.none
+                )
+
+        ToggleEntry entryId completed ->
+            let
+                updateEntry entry =
+                    if entry.id == entryId then
+                        { entry | completed = True }
+
+                    else
+                        entry
+            in
+            ( { model | entries = List.map updateEntry model.entries }, Cmd.none )
+
+
+createEntry : Int -> String -> Entry
+createEntry id name =
+    { id = id, name = name, completed = False }
 
 
 
@@ -61,16 +86,30 @@ update msg model =
 view : Model -> Html Msg
 view mod =
     div []
-      [
-        Html.form [ Events.onSubmit AddEntry ]
-          [ input
-              [ type_ "text"
-              , autofocus True
-              , placeholder "What needs to be done?"
-              , value mod.description
-              , Events.onInput SetDescription
-              ]
-              []
-          ]
-        , ul [] (List.map (\description -> li [] [ text description ]) mod.entries)
-      ]
+        [ Html.form [ Events.onSubmit AddEntry ]
+            [ input
+                [ type_ "text"
+                , autofocus True
+                , placeholder "What needs to be done?"
+                , value mod.description
+                , Events.onInput SetDescription
+                ]
+                []
+            ]
+        , ul [] (List.map (\entry -> li [] [ viewEntry entry ]) mod.entries)
+        ]
+
+
+viewEntry : Entry -> Html Msg
+viewEntry entry =
+    div []
+        [ input
+            [ type_ "checkbox"
+            , checked entry.completed
+            , Events.onCheck (ToggleEntry entry.id)
+            ]
+            []
+        , span
+            [ classList [ ( "line-through", entry.completed ) ] ]
+            [ text entry.name ]
+        ]
