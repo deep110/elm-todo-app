@@ -1,3 +1,6 @@
-# Elm FlowChart
+# Elm TODO
 
-This library aims to provide a flow chart creating module entirely in elm with no other dependencies.
+Run this to generate the JS.
+```
+elm make src/Main.elm --output todo.js
+```
