@@ -50,6 +50,9 @@ update msg model =
             let
                 cleanDescription =
                     String.trim model.description
+
+                createEntry id name =
+                    { id = id, name = name, completed = False }
             in
             if String.isEmpty cleanDescription then
                 ( model, Cmd.none )
@@ -66,18 +69,12 @@ update msg model =
             let
                 updateEntry entry =
                     if entry.id == entryId then
-                        { entry | completed = True }
+                        { entry | completed = completed }
 
                     else
                         entry
             in
             ( { model | entries = List.map updateEntry model.entries }, Cmd.none )
-
-
-createEntry : Int -> String -> Entry
-createEntry id name =
-    { id = id, name = name, completed = False }
-
 
 
 -- VIEW
