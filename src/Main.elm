@@ -20,7 +20,7 @@ type alias Entry =
 
 
 type alias Model =
-    { description : String, entries : List Entry }
+    { uid : Int, description : String, entries : List Entry }
 
 
 type Msg
@@ -34,7 +34,7 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { description = "", entries = [] }
+    ( { description = "", entries = [], uid = 0 }
     , Cmd.none
     )
 
@@ -63,7 +63,8 @@ update msg model =
             else
                 ( { model
                     | description = ""
-                    , entries = model.entries ++ [ createEntry (List.length model.entries) cleanDescription ]
+                    , entries = model.entries ++ [ createEntry model.uid cleanDescription ]
+                    , uid = model.uid + 1
                   }
                 , Cmd.none
                 )
@@ -111,32 +112,47 @@ update msg model =
 view : Model -> Html Msg
 view mod =
     div []
-        [ Html.form [ Events.onSubmit AddEntry ]
-            [ input
-                [ type_ "text"
-                , autofocus True
-                , placeholder "What needs to be done?"
-                , value mod.description
-                , Events.onInput SetDescription
-                ]
-                []
-            ]
-        , label []
-            [ input
-                [ type_ "checkbox"
-                , checked (List.all .completed mod.entries)
-                , Events.onCheck ToggleEntries
-                ]
-                []
-            , text "Mark all as completed"
-            ]
-        , ul [] (List.map (\entry -> li [] [ viewEntry entry ]) mod.entries)
-        , button
-            [ type_ "button"
-            , Events.onClick RemoveCompletedEntries
-            ]
-            [ text "Clear completed" ]
+        [viewPrompt mod.description
+        , viewBody mod.entries
         ]
+
+viewPrompt : String -> Html Msg
+viewPrompt description =
+    Html.form [ Events.onSubmit AddEntry ]
+        [ input
+            [ type_ "text"
+            , autofocus True
+            , placeholder "What needs to be done?"
+            , value description
+            , Events.onInput SetDescription
+            ]
+            []
+        ]
+
+
+viewBody : List Entry -> Html Msg
+viewBody entries =
+    if List.isEmpty entries then
+        text ""
+    else
+        div []
+            [ label []
+                [ input
+                    [ type_ "checkbox"
+                    , checked (List.all .completed entries)
+                    , Events.onCheck ToggleEntries
+                    ]
+                    []
+                , text "Mark all as completed"
+                ]
+            , ul [] (List.map (\entry -> li [] [ viewEntry entry ]) entries)
+            , div [] [ text (calcInCompleteTasks entries) ]
+            , button
+                [ type_ "button"
+                , Events.onClick RemoveCompletedEntries
+                ]
+                [ text "Clear completed" ]
+            ]
 
 
 viewEntry : Entry -> Html Msg
@@ -158,3 +174,18 @@ viewEntry entry =
             ]
             [ text "x" ]
         ]
+
+
+calcInCompleteTasks : List Entry -> String
+calcInCompleteTasks entries =
+    let
+        n =
+            entries
+                |> List.filter (\en -> en.completed /= True)
+                |> List.length
+    in
+    if n > 1 then
+        String.fromInt n ++ " tasks left"
+
+    else
+        String.fromInt n ++ " task left"
