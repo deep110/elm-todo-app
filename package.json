@@ -1,9 +1,9 @@
 {
-  "name": "elm-todo",
+  "name": "elm-todo-app",
   "version": "0.1.0",
-  "description": "Create flowcharts in elm",
-  "main": "index.js",
-  "repository": "https://github.com/deep110/elm-flowchart",
+  "description": "TODO app in elm",
+  "main": "index.html",
+  "repository": "https://github.com/deep110/elm-todo-app",
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
