@@ -19,8 +19,18 @@ type alias Entry =
     { id : Int, name : String, completed : Bool }
 
 
+type Visibility
+    = All
+    | Active
+    | Completed
+
+
 type alias Model =
-    { uid : Int, description : String, entries : List Entry }
+    { uid : Int
+    , description : String
+    , entries : List Entry
+    , visible : Visibility
+    }
 
 
 type Msg
@@ -30,11 +40,12 @@ type Msg
     | ToggleEntries Bool
     | DeleteEntry Int
     | RemoveCompletedEntries
+    | SetVisible Visibility
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { description = "", entries = [], uid = 0 }
+    ( { description = "", entries = [], uid = 0, visible = All }
     , Cmd.none
     )
 
@@ -104,6 +115,9 @@ update msg model =
             , Cmd.none
             )
 
+        SetVisible visible ->
+            ( { model | visible = visible }, Cmd.none )
+
 
 
 -- VIEW
@@ -112,9 +126,10 @@ update msg model =
 view : Model -> Html Msg
 view mod =
     div []
-        [viewPrompt mod.description
-        , viewBody mod.entries
+        [ viewPrompt mod.description
+        , viewBody mod.visible mod.entries
         ]
+
 
 viewPrompt : String -> Html Msg
 viewPrompt description =
@@ -130,10 +145,11 @@ viewPrompt description =
         ]
 
 
-viewBody : List Entry -> Html Msg
-viewBody entries =
+viewBody : Visibility -> List Entry -> Html Msg
+viewBody visible entries =
     if List.isEmpty entries then
         text ""
+
     else
         div []
             [ label []
@@ -145,8 +161,12 @@ viewBody entries =
                     []
                 , text "Mark all as completed"
                 ]
-            , ul [] (List.map (\entry -> li [] [ viewEntry entry ]) entries)
+            , ul []
+                (List.map (\entry -> li [] [ viewEntry entry ])
+                    (filterVisibility visible entries)
+                )
             , div [] [ text (calcInCompleteTasks entries) ]
+            , viewVisibilityFilters visible
             , button
                 [ type_ "button"
                 , Events.onClick RemoveCompletedEntries
@@ -176,6 +196,29 @@ viewEntry entry =
         ]
 
 
+viewVisibilityFilters : Visibility -> Html Msg
+viewVisibilityFilters selected =
+    let
+        viewVisibilityFilter name url current sel =
+            if current == sel then
+                span [] [ text name ]
+
+            else
+                a [ href url, Events.onClick (SetVisible current) ] [ text name ]
+    in
+    div []
+        [ viewVisibilityFilter "All" "#" All selected
+        , text " "
+        , viewVisibilityFilter "Active" "#active" Active selected
+        , text " "
+        , viewVisibilityFilter "Completed" "#completed" Completed selected
+        ]
+
+
+
+-- HELPERS
+
+
 calcInCompleteTasks : List Entry -> String
 calcInCompleteTasks entries =
     let
@@ -189,3 +232,16 @@ calcInCompleteTasks entries =
 
     else
         String.fromInt n ++ " task left"
+
+
+filterVisibility : Visibility -> List Entry -> List Entry
+filterVisibility visible entries =
+    case visible of
+        All ->
+            entries
+
+        Active ->
+            List.filter (not << .completed) entries
+
+        Completed ->
+            List.filter .completed entries
